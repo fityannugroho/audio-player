@@ -8,10 +8,12 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
@@ -24,6 +26,12 @@ public class MainActivity extends AppCompatActivity {
     MediaPlayer mediaPlayer;
     Handler handler = new Handler();
     Runnable runnable;
+
+    /* initialize the music playlist */
+    ArrayList<Integer> listOfMusicId = new ArrayList<>();
+
+    /* initialize the nowPlayingMusic */
+    int nowPlaying = 0;
 
 
     @Override
@@ -43,85 +51,82 @@ public class MainActivity extends AppCompatActivity {
         btnNext = findViewById(R.id.btnNext);
 
 
-        /* Initialize media player */
-        mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.maroon5_girls_like_you);
+        /* load the music playlist */
+        listOfMusicId.add(R.raw.maroon_5_sugar);
+        listOfMusicId.add(R.raw.maroon5_girls_like_you);
+        listOfMusicId.add(R.raw.maroon_5_memories);
+        listOfMusicId.add(R.raw.over_the_horizon);
 
 
-        /* Initialize runnable */
-        runnable = new Runnable() {
-            @Override
-            public void run() {
-                /* Set progress on seek bar */
-                seekBarAudio.setProgress(mediaPlayer.getCurrentPosition());
-
-                /* Handler post delay for 0.5s */
-                handler.postDelayed(this, 500);
-            }
-        };
-
-
-        /* Get duration of media player,
-            Convert ms to minutes & seconds, then displaying it */
-        tvAudioDuration.setText(seekBarTimeFormat(mediaPlayer.getDuration()));
+        /* load the first music */
+        loadMusic(listOfMusicId.get(nowPlaying), "Music " + (nowPlaying+1));
 
 
         /* When Play Button is clicked */
-        btnPlay.setOnClickListener(view -> {
-            /* Hide the Play Button & show the Pause Button */
-            showPauseButton();
-
-            /* Start the media player */
-            mediaPlayer.start();
-
-            /* Set seek bar max */
-            seekBarAudio.setMax(mediaPlayer.getDuration());
-
-            /* Start handler */
-            handler.postDelayed(runnable, 0);
-        });
+        btnPlay.setOnClickListener(view -> playMusic());
 
 
         /* When Pause Button is clicked */
-        btnPause.setOnClickListener(view -> {
-            /* Hide the Pause Button & show the Play Button */
-            showPlayButton();
-
-            /* Pause the media player */
-            mediaPlayer.pause();
-
-            /* Stop handler */
-            handler.removeCallbacks(runnable);
-        });
+        btnPause.setOnClickListener(view -> pauseMusic());
 
 
         /* When Stop Button is clicked */
         btnStop.setOnClickListener(view -> {
-            /* Hide the Pause Button & show the Play Button */
-            showPlayButton();
-
-            /* Stop the media player & the handler */
-            mediaPlayer.stop();
-            handler.removeCallbacks(runnable);
+            /* Stop the media player & handler */
+            stopMusic();
 
             /* Preparing the media player */
             try {
                 mediaPlayer.prepare();
-                mediaPlayer.seekTo(0);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
+            /* Back to start */
+            mediaPlayer.seekTo(0);
+
+            /* Handler post delay for 0.5s */
             handler.postDelayed(runnable, 500);
         });
 
 
         /* When Previous Button is clicked */
         btnPrevious.setOnClickListener(view -> {
+            /* Get the previous music in playlist */
+            if (nowPlaying != 0) {
+                nowPlaying -= 1;
+
+                /* Stop the media player & handler */
+                stopMusic();
+
+                /* Preparing the new music */
+                loadMusic(listOfMusicId.get(nowPlaying), "Music " + (nowPlaying+1));
+
+                /* Playing the new music */
+                playMusic();
+            } else {
+                showToast("This is the first music.");
+            }
         });
 
 
         /* When Next Button is clicked */
         btnNext.setOnClickListener(view -> {
+            /* Get the next music in playlist */
+            if (nowPlaying != listOfMusicId.size()-1) {
+                nowPlaying += 1;
+
+                /* Stop the media player & handler */
+                stopMusic();
+
+                /* Preparing the new music */
+                loadMusic(listOfMusicId.get(nowPlaying), "Music " + (nowPlaying+1));
+
+                /* Playing the new music */
+                playMusic();
+            } else {
+                showToast("This is the last music.");
+            }
         });
 
 
@@ -159,6 +164,70 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void loadMusic(int musicId, String musicName) {
+        /* Initialize media player */
+        mediaPlayer = MediaPlayer.create(getApplicationContext(), musicId);
+
+        /* Initialize runnable */
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                /* Set progress on seek bar */
+                seekBarAudio.setProgress(mediaPlayer.getCurrentPosition());
+
+                /* Handler post delay for 0.5s */
+                handler.postDelayed(this, 500);
+            }
+        };
+
+        /* Set seek bar max */
+        seekBarAudio.setMax(mediaPlayer.getDuration());
+
+        /* Get duration of media player,
+            Convert ms to minutes & seconds, then displaying it */
+        tvAudioDuration.setText(seekBarTimeFormat(mediaPlayer.getDuration()));
+
+        /* Update the music name */
+        tvAudioName.setText(musicName);
+    }
+
+
+    private void playMusic() {
+        /* Hide the Play Button & show the Pause Button */
+        showPauseButton();
+
+        /* Start the media player */
+        mediaPlayer.start();
+
+        /* Start handler */
+        handler.postDelayed(runnable, 0);
+    }
+
+
+    private void pauseMusic() {
+        /* Hide the Pause Button & show the Play Button */
+        showPlayButton();
+
+        /* Pause the media player */
+        mediaPlayer.pause();
+
+        /* Stop handler */
+        handler.removeCallbacks(runnable);
+    }
+
+
+    private void stopMusic() {
+        /* Hide the Pause Button & show the Play Button */
+        showPlayButton();
+
+        /* Stop the media player */
+        mediaPlayer.stop();
+
+        /* Stop handler */
+        handler.removeCallbacks(runnable);
+    }
+
+
     @SuppressLint("DefaultLocale")
     private String seekBarTimeFormat(int durationInMs) {
         long minutesDuration = TimeUnit.MILLISECONDS.toMinutes(durationInMs);
@@ -179,5 +248,11 @@ public class MainActivity extends AppCompatActivity {
     private void showPauseButton() {
         btnPause.setVisibility(View.VISIBLE);
         btnPlay.setVisibility(View.GONE);
+    }
+
+
+    private void showToast(String message) {
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT)
+                .show();
     }
 }
