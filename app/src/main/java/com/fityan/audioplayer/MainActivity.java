@@ -140,8 +140,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 /* Update the current position on display */
-                tvAudioPosition.setText(seekBarTimeFormat(
-                        mediaPlayer.getCurrentPosition()));
+                tvAudioPosition.setText(seekBarTimeFormat(mediaPlayer.getCurrentPosition()));
             }
 
             @Override
@@ -152,18 +151,14 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
-
-
-        mediaPlayer.setOnCompletionListener(mediaPlayer -> {
-            /* Hide the Pause Button & show the Play Button  */
-            showPlayButton();
-
-            /* Reset media player position */
-            mediaPlayer.seekTo(0);
-        });
     }
 
 
+    /**
+     * Load a music to audio player.
+     * @param musicId The music id.
+     * @param musicName The music name.
+     */
     private void loadMusic(int musicId, String musicName) {
         /* Initialize media player */
         mediaPlayer = MediaPlayer.create(getApplicationContext(), musicId);
@@ -183,15 +178,40 @@ public class MainActivity extends AppCompatActivity {
         /* Set seek bar max */
         seekBarAudio.setMax(mediaPlayer.getDuration());
 
-        /* Get duration of media player,
-            Convert ms to minutes & seconds, then displaying it */
+        /* Get duration of media player, convert it to minutes:seconds format, then displaying it. */
         tvAudioDuration.setText(seekBarTimeFormat(mediaPlayer.getDuration()));
 
         /* Update the music name */
         tvAudioName.setText(musicName);
+
+        /* Set autoplay to next music after the music is finished. */
+        mediaPlayer.setOnCompletionListener(mediaPlayer -> {
+            /* Get the next music in playlist */
+            if (nowPlaying != listOfMusicId.size()-1) {
+                nowPlaying += 1;
+
+                /* Stop the media player & handler */
+                stopMusic();
+
+                /* Preparing the new music */
+                loadMusic(listOfMusicId.get(nowPlaying), "Music " + (nowPlaying+1));
+
+                /* Playing the new music */
+                playMusic();
+            } else {
+                /* Hide the Pause Button & show the Play Button  */
+                showPlayButton();
+
+                /* Reset media player position */
+                mediaPlayer.seekTo(0);
+            }
+        });
     }
 
 
+    /**
+     * Play the audio player.
+     */
     private void playMusic() {
         /* Hide the Play Button & show the Pause Button */
         showPauseButton();
@@ -204,6 +224,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Pause the audio player.
+     */
     private void pauseMusic() {
         /* Hide the Pause Button & show the Play Button */
         showPlayButton();
@@ -216,6 +239,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Stop the audio player.
+     */
     private void stopMusic() {
         /* Hide the Pause Button & show the Play Button */
         showPlayButton();
@@ -228,6 +254,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Convert time in milliseconds to seek bar format (mm:ss).
+     * @param durationInMs The time in milliseconds.
+     * @return The time in string with seek bar format.
+     */
     @SuppressLint("DefaultLocale")
     private String seekBarTimeFormat(int durationInMs) {
         long minutesDuration = TimeUnit.MILLISECONDS.toMinutes(durationInMs);
@@ -239,18 +270,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Display the Play Button and hide the Pause Button.
+     */
     private void showPlayButton() {
         btnPlay.setVisibility(View.VISIBLE);
         btnPause.setVisibility(View.GONE);
     }
 
 
+    /**
+     * Display the Pause Button and hide the Play Button.
+     */
     private void showPauseButton() {
         btnPause.setVisibility(View.VISIBLE);
         btnPlay.setVisibility(View.GONE);
     }
 
 
+    /**
+     * Display a message with toast.
+     * @param message The message to displayed.
+     */
     private void showToast(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT)
                 .show();
