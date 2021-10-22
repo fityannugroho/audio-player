@@ -11,14 +11,16 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     /* View properties */
     TextView tvAudioName, tvAudioPosition, tvAudioDuration;
     SeekBar seekBarAudio;
-    ImageButton btnPrevious, btnNext, btnPlay, btnPause;
+    ImageButton btnPrevious, btnNext, btnPlay, btnPause, btnStop;
 
+    /* Media player properties */
     MediaPlayer mediaPlayer;
     Handler handler = new Handler();
     Runnable runnable;
@@ -34,14 +36,16 @@ public class MainActivity extends AppCompatActivity {
         tvAudioPosition = findViewById(R.id.tvAudioPosition);
         tvAudioDuration = findViewById(R.id.tvAudioDuration);
         seekBarAudio = findViewById(R.id.seekBarAudio);
-        btnPrevious = findViewById(R.id.btnPrevious);
-        btnNext = findViewById(R.id.btnNext);
         btnPlay = findViewById(R.id.btnPlay);
         btnPause = findViewById(R.id.btnPause);
+        btnStop = findViewById(R.id.btnStop);
+        btnPrevious = findViewById(R.id.btnPrevious);
+        btnNext = findViewById(R.id.btnNext);
 
 
         /* Initialize media player */
-        mediaPlayer = MediaPlayer.create(this, R.raw.maroon5_girls_like_you);
+        mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.maroon5_girls_like_you);
+
 
         /* Initialize runnable */
         runnable = new Runnable() {
@@ -52,12 +56,9 @@ public class MainActivity extends AppCompatActivity {
 
                 /* Handler post delay for 0.5s */
                 handler.postDelayed(this, 500);
-
-                /* Update the current position on display */
-                tvAudioPosition.setText(seekBarTimeFormat(
-                        mediaPlayer.getCurrentPosition()));
             }
         };
+
 
         /* Get duration of media player,
             Convert ms to minutes & seconds, then displaying it */
@@ -93,12 +94,33 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        /* Previous Button */
+        /* When Stop Button is clicked */
+        btnStop.setOnClickListener(view -> {
+            /* Hide the Pause Button & show the Play Button */
+            showPlayButton();
+
+            /* Stop the media player & the handler */
+            mediaPlayer.stop();
+            handler.removeCallbacks(runnable);
+
+            /* Preparing the media player */
+            try {
+                mediaPlayer.prepare();
+                mediaPlayer.seekTo(0);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            handler.postDelayed(runnable, 500);
+        });
+
+
+        /* When Previous Button is clicked */
         btnPrevious.setOnClickListener(view -> {
         });
 
 
-        /* Next Button */
+        /* When Next Button is clicked */
         btnNext.setOnClickListener(view -> {
         });
 
@@ -110,11 +132,11 @@ public class MainActivity extends AppCompatActivity {
                 if (b) {
                     /* When drag on the seek bar, set progress to the seek bar */
                     mediaPlayer.seekTo(i);
-
-                    /* Update the current position on display */
-                    tvAudioPosition.setText(seekBarTimeFormat(
-                            mediaPlayer.getCurrentPosition()));
                 }
+
+                /* Update the current position on display */
+                tvAudioPosition.setText(seekBarTimeFormat(
+                        mediaPlayer.getCurrentPosition()));
             }
 
             @Override

@@ -8,4 +8,6 @@
     <string name="desc_btn_prev">Go to previous song</string>
     <string name="desc_btn_play">Play this song</string>
     <string name="desc_btn_pause">Pause this song</string>
+    <string name="desc_btn_stop">Stop music</string>
+    <string name="tv_copyrights">&#169; 2021 by Fityan</string>
 </resources>
