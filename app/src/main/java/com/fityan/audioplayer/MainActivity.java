@@ -1,7 +1,9 @@
 package com.fityan.audioplayer;
 
 import android.annotation.SuppressLint;
+import android.media.AudioAttributes;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -23,12 +25,12 @@ public class MainActivity extends AppCompatActivity {
     ImageButton btnPrevious, btnNext, btnPlay, btnPause, btnStop;
 
     /* Media player properties */
-    MediaPlayer mediaPlayer;
-    Handler handler = new Handler();
+    final MediaPlayer mediaPlayer = new MediaPlayer();
+    final Handler handler = new Handler();
     Runnable runnable;
 
     /* initialize the music playlist */
-    ArrayList<Integer> listOfMusicId = new ArrayList<>();
+    ArrayList<Music> musicList = new ArrayList<>();
 
     /* initialize the nowPlayingMusic */
     int nowPlaying = 0;
@@ -52,14 +54,21 @@ public class MainActivity extends AppCompatActivity {
 
 
         /* load the music playlist */
-        listOfMusicId.add(R.raw.maroon_5_sugar);
-        listOfMusicId.add(R.raw.maroon5_girls_like_you);
-        listOfMusicId.add(R.raw.maroon_5_memories);
-        listOfMusicId.add(R.raw.over_the_horizon);
+        musicList.add(new Music(getRawUri(R.raw.maroon_5_sugar), "Maroon 5 - Sugar"));
+        musicList.add(new Music(getRawUri(R.raw.maroon5_girls_like_you), "Maroon 5 - Girls Like You"));
+        musicList.add(new Music(getRawUri(R.raw.maroon_5_memories), "Maroon 5 - Memories"));
+        musicList.add(new Music(getRawUri(R.raw.over_the_horizon), "Over The Horizon"));
 
+
+        /* Initialize the audio player */
+        init();
 
         /* load the first music */
-        loadMusic(listOfMusicId.get(nowPlaying), "Music " + (nowPlaying+1));
+        try {
+            loadMusic(musicList.get(nowPlaying));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
         /* When Play Button is clicked */
@@ -93,18 +102,9 @@ public class MainActivity extends AppCompatActivity {
         /* When Previous Button is clicked */
         btnPrevious.setOnClickListener(view -> {
             /* Get the previous music in playlist */
-            if (nowPlaying != 0) {
-                nowPlaying -= 1;
-
-                /* Stop the media player & handler */
-                stopMusic();
-
-                /* Preparing the new music */
-                loadMusic(listOfMusicId.get(nowPlaying), "Music " + (nowPlaying+1));
-
-                /* Playing the new music */
-                playMusic();
-            } else {
+            try {
+                goToPreviousMusic();
+            } catch (IndexOutOfBoundsException e) {
                 showToast("This is the first music.");
             }
         });
@@ -113,18 +113,9 @@ public class MainActivity extends AppCompatActivity {
         /* When Next Button is clicked */
         btnNext.setOnClickListener(view -> {
             /* Get the next music in playlist */
-            if (nowPlaying != listOfMusicId.size()-1) {
-                nowPlaying += 1;
-
-                /* Stop the media player & handler */
-                stopMusic();
-
-                /* Preparing the new music */
-                loadMusic(listOfMusicId.get(nowPlaying), "Music " + (nowPlaying+1));
-
-                /* Playing the new music */
-                playMusic();
-            } else {
+            try {
+                goToNextMusic();
+            } catch (IndexOutOfBoundsException e) {
                 showToast("This is the last music.");
             }
         });
@@ -155,13 +146,43 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * Load a music to audio player.
-     * @param musicId The music id.
-     * @param musicName The music name.
+     * Initialize the audio player.
      */
-    private void loadMusic(int musicId, String musicName) {
+    private void init() {
         /* Initialize media player */
-        mediaPlayer = MediaPlayer.create(getApplicationContext(), musicId);
+        mediaPlayer.setAudioAttributes(
+                new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build());
+
+        /* Set autoplay to next music after the music is finished. */
+        mediaPlayer.setOnCompletionListener(mediaPlayer -> {
+            try {
+                goToNextMusic();
+            } catch (IndexOutOfBoundsException e) {
+                /* Hide the Pause Button & show the Play Button  */
+                showPlayButton();
+
+                /* Reset media player position */
+                mediaPlayer.seekTo(0);
+            }
+        });
+    }
+
+    /**
+     * Load a music to audio player.
+     * @param music The music.
+     */
+    private void loadMusic(Music music) throws IOException {
+        /* Reset the media player to idle. */
+        mediaPlayer.reset();
+
+        /* Set the music to media player */
+        mediaPlayer.setDataSource(getApplicationContext(), music.getUri());
+
+        /* Preparing the media player */
+        mediaPlayer.prepare();
 
         /* Initialize runnable */
         runnable = new Runnable() {
@@ -178,34 +199,61 @@ public class MainActivity extends AppCompatActivity {
         /* Set seek bar max */
         seekBarAudio.setMax(mediaPlayer.getDuration());
 
-        /* Get duration of media player, convert it to minutes:seconds format, then displaying it. */
+        /* Get duration of media player, convert it to Seek Bar time format, then displaying it. */
         tvAudioDuration.setText(seekBarTimeFormat(mediaPlayer.getDuration()));
 
         /* Update the music name */
-        tvAudioName.setText(musicName);
+        tvAudioName.setText(music.getTitle());
+    }
 
-        /* Set autoplay to next music after the music is finished. */
-        mediaPlayer.setOnCompletionListener(mediaPlayer -> {
-            /* Get the next music in playlist */
-            if (nowPlaying != listOfMusicId.size()-1) {
-                nowPlaying += 1;
 
-                /* Stop the media player & handler */
-                stopMusic();
+    /**
+     * Play the previous music
+     */
+    private void goToPreviousMusic() {
+        if (nowPlaying == 0) {
+            throw new IndexOutOfBoundsException();
+        }
 
-                /* Preparing the new music */
-                loadMusic(listOfMusicId.get(nowPlaying), "Music " + (nowPlaying+1));
+        /* Stop the media player & handler */
+        stopMusic();
 
-                /* Playing the new music */
-                playMusic();
-            } else {
-                /* Hide the Pause Button & show the Play Button  */
-                showPlayButton();
+        /* Preparing the new music */
+        nowPlaying -= 1;
 
-                /* Reset media player position */
-                mediaPlayer.seekTo(0);
-            }
-        });
+        try {
+            loadMusic(musicList.get(nowPlaying));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        /* Playing the new music */
+        playMusic();
+    }
+
+
+    /**
+     * Play the next music.
+     */
+    private void goToNextMusic() {
+        if (nowPlaying == musicList.size()-1) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        /* Stop the media player & handler */
+        stopMusic();
+
+        /* Preparing the new music */
+        nowPlaying += 1;
+
+        try {
+            loadMusic(musicList.get(nowPlaying));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        /* Playing the new music */
+        playMusic();
     }
 
 
@@ -295,5 +343,10 @@ public class MainActivity extends AppCompatActivity {
     private void showToast(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT)
                 .show();
+    }
+
+
+    private Uri getRawUri(int rawId) {
+        return Uri.parse("android.resource://" + getPackageName() + "/" + rawId);
     }
 }
