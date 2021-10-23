@@ -145,6 +145,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    protected void onDestroy() {
+        /* Stop the media player */
+        stopMusic();
+
+        /* Destroy the media player. */
+        mediaPlayer.release();
+
+        /* Destroy the activity */
+        super.onDestroy();
+    }
+
     /**
      * Initialize the audio player.
      */
