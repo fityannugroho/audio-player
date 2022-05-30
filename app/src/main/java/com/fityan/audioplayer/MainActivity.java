@@ -184,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Load a music to audio player.
+     *
      * @param music The music.
      */
     private void loadMusic(Music music) throws IOException {
@@ -248,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
      * Play the next music.
      */
     private void goToNextMusic() {
-        if (nowPlaying == musicList.size()-1) {
+        if (nowPlaying == musicList.size() - 1) {
             throw new IndexOutOfBoundsException();
         }
 
@@ -316,6 +317,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Convert time in milliseconds to seek bar format (mm:ss).
+     *
      * @param durationInMs The time in milliseconds.
      * @return The time in string with seek bar format.
      */
@@ -350,6 +352,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Display a message with toast.
+     *
      * @param message The message to displayed.
      */
     private void showToast(String message) {

@@ -15,9 +15,9 @@ public class Music extends File {
         this.title = title;
     }
 
-
     /**
      * Get the music Uri.
+     *
      * @return The music Uri.
      */
     public Uri getUri() {
@@ -27,6 +27,7 @@ public class Music extends File {
 
     /**
      * Get the music title.
+     *
      * @return The music title.
      */
     public String getTitle() {
