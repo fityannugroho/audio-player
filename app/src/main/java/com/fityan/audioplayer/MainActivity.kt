@@ -6,6 +6,7 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.ImageButton
 import android.widget.SeekBar
@@ -30,7 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     /* Media player properties */
     private val mediaPlayer = MediaPlayer()
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
     private var runnable: Runnable? = null
 
     /* initialize the music playlist */
