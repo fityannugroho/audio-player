@@ -55,16 +55,10 @@ class MainActivity : AppCompatActivity() {
         btnNext = findViewById(R.id.btnNext)
 
         /* load the music playlist */
-        musicList.add(
-            Music(
-                getRawUri(R.raw.maroon_5_sugar),
-                "Maroon 5 - Sugar"
-            )
-        )
+        musicList.add(Music(getRawUri(R.raw.maroon_5_sugar),"Maroon 5 - Sugar"))
         musicList.add(Music(getRawUri(R.raw.maroon5_girls_like_you), "Maroon 5 - Girls Like You"))
         musicList.add(Music(getRawUri(R.raw.maroon_5_memories), "Maroon 5 - Memories"))
         musicList.add(Music(getRawUri(R.raw.over_the_horizon), "Over The Horizon"))
-
 
         /* Initialize the audio player */
         init()
