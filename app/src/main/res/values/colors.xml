@@ -15,4 +15,8 @@
     <color name="grey_1">#ADADAD</color>
     <color name="grey_2">#BABABA</color>
     <color name="grey_3">#636363</color>
+    <color name="dark_blue">#050A30</color>
+    <color name="navy_blue">#000C66</color>
+    <color name="blue">#0000FF</color>
+    <color name="baby_blue">#7EC8E3</color>
 </resources>
